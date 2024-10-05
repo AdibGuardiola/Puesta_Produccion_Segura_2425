@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Contraseñas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #56ccf2, #2f80ed);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 350px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input[type="text"], input[type="email"], input[type="date"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .output {
+            margin-top: 20px;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Generar Contraseñas</h2>
+        <form id="form">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" required>
+
+            <label for="apellido">Apellido:</label>
+            <input type="text" id="apellido" required>
+
+            <label for="correo">Correo Electrónico:</label>
+            <input type="email" id="correo" required>
+
+            <label for="fecha_nacimiento">Fecha de Nacimiento:</label>
+            <input type="date" id="fecha_nacimiento" required>
+
+            <label for="direccion">Dirección (con número de vivienda):</label>
+            <input type="text" id="direccion" required>
+
+            <input type="submit" value="Generar Contraseñas">
+        </form>
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        document.getElementById('form').addEventListener('submit', function(event) {
+            event.preventDefault();  // Evitar recarga de la página
+
+            // Obtener los valores del formulario
+            var nombre = document.getElementById('nombre').value;
+            var apellido = document.getElementById('apellido').value;
+            var correo = document.getElementById('correo').value;
+            var fecha_nacimiento = document.getElementById('fecha_nacimiento').value;
+            var direccion = document.getElementById('direccion').value;
+
+            // Generar contraseñas basadas en nombre, apellido, correo, fecha de nacimiento y dirección
+            var posiblesContraseñas = generarContraseñas(100, nombre, apellido, correo, fecha_nacimiento, direccion);
+
+            // Mostrar en la pantalla que se han generado las contraseñas
+            var outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = "<p>Generadas 100 contraseñas para " + nombre + " " + apellido + "</p>";
+
+            // Crear el archivo de salida solo con las contraseñas
+            var contenidoArchivo = posiblesContraseñas.join("\n");
+
+            var blob = new Blob([contenidoArchivo], { type: "text/plain" });
+
+            // Crear un enlace para descargar el archivo con nombre fijo "posibles_contraseñas.txt"
+            var enlace = document.createElement("a");
+            enlace.href = URL.createObjectURL(blob);
+            enlace.download = "posibles_contraseñas.txt";
+
+            // Añadir el enlace al DOM y simular un clic
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+        });
+
+        // Función para generar contraseñas de entre 4 y 8 caracteres
+        function generarContraseñas(cantidad, nombre, apellido, correo, fecha_nacimiento, direccion) {
+            var contraseñas = new Set();  // Usamos un Set para evitar duplicados
+            var caracteres = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+            var combinaciones = [
+                nombre.slice(0, 3),  // Primeras letras del nombre
+                apellido.slice(-3),  // Últimas letras del apellido
+                fecha_nacimiento.split('-').join(''),  // Fecha sin guiones
+                correo.split('@')[0],  // Parte del correo antes del @
+                direccion.replace(/\s+/g, '').slice(0, 5),  // Parte de la dirección sin espacios
+                Math.floor(Math.random() * 9999)  // Número aleatorio
+            ];
+
+            // Añadir la primera contraseña que es la combinación de la dirección y el número de vivienda
+            contraseñas.add(direccion.replace(/\s+/g, '').slice(0, 8));  // Limitar a máximo 8 caracteres de la dirección
+
+            // Generar más contraseñas aleatorias
+            while (contraseñas.size < cantidad) {
+                var contraseña = "";
+
+                // Generar una contraseña aleatoria con longitud de entre 4 y 8 caracteres
+                var longitud = Math.floor(Math.random() * 5) + 4;
+
+                // Añadir caracteres al azar y combinaciones de los datos del usuario
+                for (var i = 0; i < longitud; i++) {
+                    if (i % 2 === 0 && combinaciones.length > 0) {
+                        var randomComb = combinaciones[Math.floor(Math.random() * combinaciones.length)];
+                        contraseña += randomComb;
+                    } else {
+                        var randomChar = caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+                        contraseña += randomChar;
+                    }
+                }
+
+                contraseñas.add(contraseña.slice(0, 8));  // Limitar a máximo 8 caracteres
+            }
+
+            return Array.from(contraseñas);  // Convertir Set a Array
+        }
+    </script>
+</body>
+</html>
